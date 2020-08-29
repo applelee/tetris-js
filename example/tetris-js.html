@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>tetris-js</title>
+  <style>
+    *{margin: 0;box-sizing: border-box;}
+    body{width: 100vw;height: 100vh;display: flex;justify-content: center;align-items: center;flex-direction: column;}
+    #tetris_container{background-color:#eee;position:relative;overflow:hidden;border: 1px solid black;}
+    .btn-box {display: flex;justify-content: center;position: absolute;left: 0;top: 20px;width: 100%;}
+    .btn-box div{padding: 0 10px;cursor: pointer;}
+    .btn-box div:hover, .btn-box div.current{background-color: #1ec226;}
+    .rect{width:30px;height:30px;position:absolute;border-width: 15px;border-style: solid;border-color: transparent;display: flex;align-items: center;justify-content: center;}
+    /* .rect:not(.rect-bg){box-shadow: 0 0 0 5px inset rgba(0, 0, 0, 0.4);} */
+    .rect-bg{}
+    .rect-I{border-color: rgb(230, 90, 90) rgba(180,40,40,1) rgb(160, 30, 30) rgb(215, 50, 50);}
+    .rect-L{border-color: rgb(230, 197, 90) rgb(180, 152, 40) rgb(160, 119, 30) rgb(215, 163, 50);}
+    .rect-J{border-color: rgb(200, 90, 230) rgb(180, 40, 180) rgb(138, 30, 160) rgb(193, 50, 215);}
+    .rect-Z{border-color: rgb(90, 230, 148) rgb(40, 180, 103) rgb(30, 160, 88) rgb(50, 215, 124);}
+    .rect-S{border-color: rgb(90, 179, 230) rgb(40, 152, 180) rgb(30, 140, 160) rgb(50, 190, 215);}
+    .rect-T{border-color: rgb(141, 230, 90) rgb(84, 180, 40) rgb(78, 160, 30) rgb(124, 215, 50);}
+    .rect-O{border-color: rgb(90, 92, 230) rgb(40, 42, 180) rgb(30, 32, 160) rgb(53, 50, 215);}
+    /*.orange-bg{background-color:#ff8400;}
+    .yellow-bg{background-color:#fcff00;}
+    .green-bg{background-color:#18ff00;}
+    .cyan-bg{background-color:#00f6ff;}
+    .blue-bg{background-color:#0006ff;}
+    .violet-bg{background-color:#c600ff;}*/
+    .reset{height: 40px;padding: 0 20px;border-radius: 3px;background-color:#0053bf;font-size: 16px;color: white;display: flex;align-items: center;cursor: pointer;
+    position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);display: none;box-shadow: 0 0 0 3px white;}
+  </style>
+</head>
+<body>
+  <div class='btn-box'>
+    <div class='ready'>准备</div>
+    <div class='start'>开始</div>
+    <div class='pause'>暂停</div>
+    <div class='over'>结束</div>
+  </div>
+  <div id='tetris_container'></div>
+
+  <div class='reset'>重新开始</div>
+  <script src="../lib/TetrisJS.js"></script>
+  <script>
+  (function () {
+    const readyDom = document.querySelector('.ready');
+    const startDom = document.querySelector('.start');
+    const pauseDom = document.querySelector('.pause');
+    const overDom = document.querySelector('.over');
+    const resetDom = document.querySelector('.reset');
+    const unitSize = 30;
+    const screenSize = [13, 20];
+    const screenContainer = document.querySelector('#tetris_container');
+    
+    screenContainer.style.width = `${unitSize * screenSize[0]}px`;
+    screenContainer.style.height = `${unitSize * screenSize[1]}px`;
+
+    // 创建实例(
+    // 也可以用TetrisJS.create(opt)
+    const TJS = new TetrisJS({
+      screenSize,
+      intervals: 1000,
+    });
+    TJS.update(({ screenMap, fireNum }) => {
+      console.log(fireNum);
+      renderGame(screenMap);
+    });
+    TJS.over(b => {
+      if (b) {
+        resetDom.style.display = 'flex';
+        startDom.setAttribute('class', 'start');
+        overDom.setAttribute('class', 'over current');
+      }
+    });
+
+    if (TJS) {
+      document.addEventListener('keydown', e => {
+        const { keyCode } = e;
+        
+        if (keyCode === 37) TJS.action('left');
+        else if (keyCode === 39) TJS.action('right');
+        else if (keyCode === 38) TJS.action('change');
+        else if (keyCode === 40) TJS.action('lower');
+      });
+    }
+
+    // gameStatus  0初始化，1准备游戏，2游戏中，3游戏结束
+    // 按钮样式处理
+    readyDom.addEventListener('click', () => {
+      if (TJS.gameStatus !== 0) return;
+      readyDom.setAttribute('class', 'ready current');
+      startDom.setAttribute('class', 'start');
+      pauseDom.setAttribute('class', 'pause');
+      TJS.ready();
+    })
+    startDom.addEventListener('click', () => {
+      if (TJS.gameStatus !== 1 && TJS.gameStatus !== 2) return;
+      readyDom.setAttribute('class', 'ready');
+      startDom.setAttribute('class', 'start current');
+      TJS.start();
+    })
+    pauseDom.addEventListener('click', () => {
+      if (TJS.gameStatus !== 2) return;
+      startDom.setAttribute('class', 'start');
+      pauseDom.setAttribute('class', 'pause current');
+      TJS.pause();
+    })
+    resetDom.addEventListener('click', () => {
+      if (TJS.gameStatus !== 3) return;
+      overDom.setAttribute('class', 'over');
+      resetDom.style.display = 'none';
+      TJS.reset();
+    })
+
+    const renderGame = data => {
+      const container = document.createElement('div');
+      const [width, height] = screenSize;
+      screenContainer.innerHTML = null;
+      container.style.width = `${width * unitSize}px`;
+      container.style.height = `${height * unitSize}px`;
+
+      data.forEach(v => {
+        const [x, y] = v.vector;
+        const unit = document.createElement('div');
+        unit.style.width = unit.style.height = `${unitSize}px`;
+        unit.style.left = `${x * unitSize}px`;
+        unit.style.top = `${y * unitSize}px`;
+        unit.setAttribute('class', `rect rect-${v.type}`);
+        // unit.textContent = `${x},${y}`;
+
+        container.appendChild(unit);
+      });
+      screenContainer.appendChild(container);
+    }
+  })();
+  </script>
+</body>
+</html>
