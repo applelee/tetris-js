@@ -7,7 +7,8 @@
   <style>
     *{margin: 0;box-sizing: border-box;}
     body{width: 100vw;height: 100vh;display: flex;justify-content: center;align-items: center;flex-direction: column;}
-    #tetris_container{background-color:#eee;position:relative;overflow:hidden;border: 1px solid black;}
+    .tetris_container{background-color:#f3f3f3;position:relative;overflow:hidden;border: 1px solid black;}
+    .next_shap{position: relative;}
     .btn-box {display: flex;justify-content: center;position: absolute;left: 0;top: 20px;width: 100%;}
     .btn-box div{padding: 0 10px;cursor: pointer;}
     .btn-box div:hover, .btn-box div.current{background-color: #1ec226;}
@@ -27,32 +28,42 @@
     .cyan-bg{background-color:#00f6ff;}
     .blue-bg{background-color:#0006ff;}
     .violet-bg{background-color:#c600ff;}*/
-    .reset{height: 40px;padding: 0 20px;border-radius: 3px;background-color:#0053bf;font-size: 16px;color: white;display: flex;align-items: center;cursor: pointer;
-    position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);display: none;box-shadow: 0 0 0 3px white;}
+    .again{height: 40px;padding: 0 40px;border-radius: 3px;background-color:#0013bf;font-size: 16px;color: white;display: none;align-items: center;cursor: pointer;
+    position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.4);}
   </style>
 </head>
 <body>
   <div class='btn-box'>
     <div class='ready'>准备</div>
-    <div class='start'>开始</div>
+    <div class='play'>开始</div>
     <div class='pause'>暂停</div>
     <div class='over'>结束</div>
   </div>
-  <div id='tetris_container'></div>
+  <div class='next_shap'></div>
+  <div class='tetris_container'></div>
+  <div style='margin-top: 10px;'>
+    <span>得分：</span>
+    <span class="score"></span>
+  </div>
+  <div class='again'>重新开始</div>
 
-  <div class='reset'>重新开始</div>
   <script src="../lib/TetrisJS.js"></script>
   <script>
   (function () {
     const readyDom = document.querySelector('.ready');
-    const startDom = document.querySelector('.start');
+    const playDom = document.querySelector('.play');
     const pauseDom = document.querySelector('.pause');
     const overDom = document.querySelector('.over');
-    const resetDom = document.querySelector('.reset');
+    const againDom = document.querySelector('.again');
+    const scoreDom = document.querySelector('.score');
     const unitSize = 30;
     const screenSize = [13, 20];
-    const screenContainer = document.querySelector('#tetris_container');
+    const nextShapSize = [5, 2];
+    const nextShapDom = document.querySelector('.next_shap');
+    const screenContainer = document.querySelector('.tetris_container');
     
+    nextShapDom.style.width = `${unitSize * nextShapSize[0]}px`;
+    nextShapDom.style.height = `${unitSize * nextShapSize[1]}px`;
     screenContainer.style.width = `${unitSize * screenSize[0]}px`;
     screenContainer.style.height = `${unitSize * screenSize[1]}px`;
 
@@ -62,14 +73,16 @@
       screenSize,
       intervals: 1000,
     });
-    TJS.update(({ screenMap, fireNum }) => {
-      console.log(fireNum);
-      renderGame(screenMap);
-    });
-    TJS.over(b => {
-      if (b) {
-        resetDom.style.display = 'flex';
-        startDom.setAttribute('class', 'start');
+    TJS.update(() => {
+      renderGame(TJS.map);
+      renderNextShap(TJS.nextShap);
+      scoreDom.innerText = TJS.score;
+
+      // 游戏结束
+      if (TJS.status === 3) {
+        againDom.style.display = 'flex';
+        playDom.setAttribute('class', 'play');
+        pauseDom.setAttribute('class', 'pause');
         overDom.setAttribute('class', 'over current');
       }
     });
@@ -85,34 +98,49 @@
       });
     }
 
-    // gameStatus  0初始化，1准备游戏，2游戏中，3游戏结束
+    // status  0初始化，1准备游戏，2游戏中，3游戏结束
     // 按钮样式处理
+    // 点击准备
     readyDom.addEventListener('click', () => {
-      if (TJS.gameStatus !== 0) return;
+      if (TJS.status !== 0) return;
       readyDom.setAttribute('class', 'ready current');
-      startDom.setAttribute('class', 'start');
+      playDom.setAttribute('class', 'play');
       pauseDom.setAttribute('class', 'pause');
       TJS.ready();
     })
-    startDom.addEventListener('click', () => {
-      if (TJS.gameStatus !== 1 && TJS.gameStatus !== 2) return;
+    // 点击开始
+    playDom.addEventListener('click', () => {
+      if (TJS.status !== 1 && TJS.status !== 2) return;
       readyDom.setAttribute('class', 'ready');
-      startDom.setAttribute('class', 'start current');
-      TJS.start();
+      playDom.setAttribute('class', 'play current');
+      pauseDom.setAttribute('class', 'pause');
+      TJS.play();
     })
+    // 点击暂停
     pauseDom.addEventListener('click', () => {
-      if (TJS.gameStatus !== 2) return;
-      startDom.setAttribute('class', 'start');
+      if (TJS.status !== 2) return;
+      playDom.setAttribute('class', 'play');
       pauseDom.setAttribute('class', 'pause current');
       TJS.pause();
     })
-    resetDom.addEventListener('click', () => {
-      if (TJS.gameStatus !== 3) return;
+    // 点击结束
+    overDom.addEventListener('click', () => {
+      if (TJS.status !== 2) return;
+      playDom.setAttribute('class', 'play');
+      pauseDom.setAttribute('class', 'pause');
+      overDom.setAttribute('class', 'over current');
+      againDom.style.display = 'flex';
+      TJS.over();
+    })
+    againDom.addEventListener('click', () => {
+      if (TJS.status !== 3) return;
       overDom.setAttribute('class', 'over');
-      resetDom.style.display = 'none';
-      TJS.reset();
+      readyDom.setAttribute('class', 'ready current');
+      againDom.style.display = 'none';
+      TJS.again({});
     })
 
+    // 渲染游戏数据
     const renderGame = data => {
       const container = document.createElement('div');
       const [width, height] = screenSize;
@@ -128,10 +156,37 @@
         unit.style.top = `${y * unitSize}px`;
         unit.setAttribute('class', `rect rect-${v.type}`);
         // unit.textContent = `${x},${y}`;
-
         container.appendChild(unit);
       });
       screenContainer.appendChild(container);
+    }
+
+    // 渲染下一个方块
+    const renderNextShap = data => {
+      const container = document.createElement('div');
+      const { type, shapData } = data;
+      const [w, h] = nextShapSize;
+      const dataSet = new Set();
+
+      container.style.width = `${w * unitSize}px`;
+      container.style.height = `${h * unitSize}px`;
+      nextShapDom.innerHTML = null;
+      shapData.forEach(v => {
+        dataSet.add(`${v[0]}_${v[1]}`);
+      });
+
+      for (let i = 0; i < h; i ++) {
+        for (let j = 0; j < w; j ++) {
+          const unit = document.createElement('div');
+          unit.style.width = unit.style.height = `${unitSize}px`;
+          unit.style.left = `${j * unitSize}px`;
+          unit.style.top = `${i * unitSize}px`;
+          unit.setAttribute('class', `rect rect-${dataSet.has(`${j-1}_${i}`) ? type : 'bg'}`);
+          container.appendChild(unit);
+        }
+      }
+      
+      nextShapDom.appendChild(container);
     }
   })();
   </script>
