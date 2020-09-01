@@ -47,7 +47,7 @@
   </div>
   <div class='again'>重新开始</div>
 
-  <script src="../lib/TetrisJS.js"></script>
+  <script src="../lib/TetrisJS.enum.js"></script>
   <script>
   (function () {
     const readyDom = document.querySelector('.ready');
@@ -167,19 +167,13 @@
       const { type, shapData } = data;
       const [w, h] = nextShapSize;
       const dataSet = new Set();
-      const row = shapData.length;
-      const col = shapData[0].length;
 
       container.style.width = `${w * unitSize}px`;
       container.style.height = `${h * unitSize}px`;
       nextShapDom.innerHTML = null;
-      for (let r = 0; r < row; r ++) {
-        for (let c = 0; c < col; c ++) {
-          if (shapData[r][c] === 1) {
-            dataSet.add(`${type === 'O' ? c + 1 : c}_${r}`);
-          }
-        }
-      }
+      shapData.forEach(v => {
+        dataSet.add(`${v[0]}_${v[1]}`);
+      });
 
       for (let i = 0; i < h; i ++) {
         for (let j = 0; j < w; j ++) {

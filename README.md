@@ -22,7 +22,7 @@ __new TetrisJS(options)__
     intervals: 1000,
   })
 ```
-or
+or<br/>
 __TetrisJS.create(options)__
 ```javascript
   var TJS = TetrisJS.create({
