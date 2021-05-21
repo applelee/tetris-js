@@ -35,7 +35,7 @@ __TetrisJS.create(options)__
 #### instance.map Map
 游戏渲染数据，渲染层可依据此数据渲染出游戏洁面
 ```javascript
-  FF.map
+  TJS.map
 ```  
 
 #### instance.status Number
@@ -45,13 +45,13 @@ __TetrisJS.create(options)__
   // 1 游戏准备状态
   // 2 游戏中
   // 3 游戏结束
-  FF.status
+  TJS.status
 ```  
 
 #### instance.score Number
 游戏得分
 ```javascript
-  FF.score
+  TJS.score
 ```  
 
 #### instance.nextShap Object
